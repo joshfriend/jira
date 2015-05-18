@@ -379,6 +379,16 @@ class Issue(Resource):
         return self.id == other.id
 
 
+class Transition(Resource):
+
+    """A transition for an issue."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'issue/{0}transitions/{1}', options, session)
+        if raw:
+            self._parse_raw(raw)
+
+
 class Comment(Resource):
 
     """An issue comment."""
@@ -746,6 +756,7 @@ resource_class_map = {
     r'filter/[^/]$': Filter,
     r'issue/[^/]+$': Issue,
     r'issue/[^/]+/comment/[^/]+$': Comment,
+    r'issue/[^/]+/transitions$': Transition,
     r'issue/[^/]+/votes$': Votes,
     r'issue/[^/]+/watchers$': Watchers,
     r'issue/[^/]+/worklog/[^/]+$': Worklog,
