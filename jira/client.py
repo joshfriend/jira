@@ -46,7 +46,7 @@ except:
 # JIRA specific resources
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, \
     Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, \
-    CustomFieldOption, RemoteLink
+    CustomFieldOption, RemoteLink, Transition
 # GreenHopper specific resources
 from jira.resources import GreenHopperResource, Board, Sprint
 from jira.resilientsession import ResilientSession
@@ -904,7 +904,6 @@ class JIRA(object):
             self._options, self._session, raw=json_loads(r))
         return remote_link
 
-    # non-resource
     @translate_resource_args
     def transitions(self, issue, id=None, expand=None):
         """
@@ -919,7 +918,12 @@ class JIRA(object):
             params['transitionId'] = id
         if expand is not None:
             params['expand'] = expand
-        return self._get_json('issue/' + str(issue) + '/transitions', params=params)['transitions']
+
+        r_json = self._get_json('issue/' + str(issue) + '/transitions', params=params)
+
+        transitions = [Transition(self._options, self._session, raw_transition_json)
+                       for raw_transition_json in r_json['transitions']]
+        return transitions
 
     def find_transitionid_by_name(self, issue, transition_name):
         """
@@ -933,8 +937,8 @@ class JIRA(object):
         id = None
 
         for transition in transitions_json:
-            if transition["name"].lower() == transition_name.lower():
-                id = transition["id"]
+            if transition.name.lower() == transition_name.lower():
+                id = transition.id
                 break
         return id
 
@@ -957,13 +961,16 @@ class JIRA(object):
 
         transitionId = None
 
-        try:
-            transitionId = int(transition)
-        except:
-            # cannot cast to int, so try to find transitionId by name
-            transitionId = self.find_transitionid_by_name(issue, transition)
-            if transitionId is None:
-                raise JIRAError("Invalid transition name. %s" % transition)
+        if isinstance(transition, Transition):
+            transitionId = transition.id
+        else:
+            try:
+                transitionId = int(transition)
+            except:
+                # cannot cast to int, so try to find transitionId by name
+                transitionId = self.find_transitionid_by_name(issue, transition)
+                if transitionId is None:
+                    raise JIRAError("Invalid transition name. %s" % transition)
 
         data = {
             'transition': {

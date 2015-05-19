@@ -975,12 +975,12 @@ class IssueTests(unittest.TestCase):
 
     def test_transition(self):
         transition = self.jira.transitions(self.issue_2, '5')
-        self.assertEqual(transition[0]['name'], 'Resolve Issue')
+        self.assertEqual(transition[0].name, 'Resolve Issue')
 
     def test_transition_expand(self):
         transition = self.jira.transitions(self.issue_2, '5',
                                            expand='transitions.fields')
-        self.assertTrue('fields' in transition[0])
+        self.assertTrue(hasattr(transition, 'fields'))
 
     def test_transition_issue_with_fieldargs(self):
         issue = self.jira.create_issue(project=self.project_b,
